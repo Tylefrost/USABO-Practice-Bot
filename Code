@@ -1,0 +1,46 @@
+import discord
+import os
+import requests
+import json
+import PyPDF2
+
+intent = discord.Intents.default()
+intent.members = True
+intent.message_content = True
+client = discord.Client(intents=intent)
+
+
+def getrandquestion():
+  pdf = PyPDF2.PdfReader(open('2004_OpenExam_AnswerKey.pdf', 'rb'))
+  firstpage = pdf.pages[0]
+  text=firstpage.extract_text()
+  firstquestion = text.split("1. ")[2].split("2. ")[0]
+  return(firstquestion)
+  
+def getquote():
+  response = requests.get("https://zenquotes.io/api/random")
+  json_data = json.loads(response.text)
+  quote = json_data[0]['q'] + " -" + json_data[0]['a']
+  return(quote)
+
+@client.event
+async def on_ready():
+  print('We have logged in as {0.user}'.format(client))
+
+@client.event
+async def on_message(message):
+  if message.author == client.user:
+    return
+
+  if message.content.startswith('$rand'): #if user wants a random question reply a random question
+    randquestion = getrandquestion()
+    await message.channel.send(randquestion)
+
+  if message.content.startswith('$hello'): #if user says hello reply hello
+    await message.channel.send('Hello!')
+    
+  if message.content.startswith('$inspire'): #if user wants inspiration reply quote
+    quote = getquote()
+    await message.channel.send(quote)
+    
+client.run(os.environ['TOKEN'])  #runs bot
